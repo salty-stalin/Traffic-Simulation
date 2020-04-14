@@ -1,0 +1,836 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Feb  1 18:44:37 2020
+
+@author: User
+"""
+from math import fabs
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+start_time = time.time()
+
+length_of_road=100
+number_of_cars=192
+
+Vmax=5
+
+break_down_chance=25/100
+
+
+count=np.zeros(5)
+
+
+
+
+num_per_lane=int(number_of_cars/4)
+v=np.random.rand(144) #generate random velocities
+v2=np.round(v*Vmax,decimals=0)
+
+
+n=99
+
+"""
+#DRIVING RIGHT START POSITIONS
+x_positions0=random.sample(range(int(length_of_road)), num_per_lane)
+x_positions0=np.negative(x_positions0)
+y_positions0=np.zeros(num_per_lane)
+y_positions0.fill(50)
+"""
+
+
+#DRIVING LEFT START POSTIONS
+
+x_positions1=random.sample(range(int(length_of_road)+1), num_per_lane)
+#x_positions=np.negative(x_positions)
+y_positions1=np.zeros(num_per_lane)
+y_positions1.fill(49)
+
+
+#DRIVING UP START POSITIONS
+y_positions2=random.sample(range(int(length_of_road*0.5)-2), num_per_lane)
+x_positions2=np.zeros(num_per_lane)
+x_positions2.fill(0)
+
+
+
+#DRIVING DOWN START POSITIONS
+y_positions3=random.sample(range(51,int(length_of_road)), num_per_lane)
+x_positions3=np.zeros(num_per_lane)
+x_positions3.fill(1)
+
+
+
+#x=np.append(x_positions0,x_positions1)
+x=np.append(x_positions1,x_positions2)
+x=np.append(x,x_positions3)
+#y=np.append(y_positions0,y_positions1)
+y=np.append(y_positions1,y_positions2)
+y=np.append(y,y_positions3)
+
+car1=np.vstack((x,y))
+
+grid0=np.empty(length_of_road*2)
+grid1=np.empty(length_of_road*2)
+grid2=np.empty(length_of_road*2)
+grid3=np.empty(length_of_road*2)
+grid4=np.empty(length_of_road*2)
+grid5=np.empty(length_of_road*2)
+grid6=np.empty(length_of_road*2)
+grid7=np.empty(length_of_road*2)
+grid8=np.empty(length_of_road*2)
+grid9=np.empty(length_of_road*2)
+grid10=np.empty(length_of_road*2)
+grid11=np.empty(length_of_road*2)
+
+car1=np.vstack((car1,v2))
+lane=np.zeros(144)
+
+lane[[range(num_per_lane)]]=10
+lane[[range(num_per_lane,num_per_lane*2)]]=1
+lane[[range(num_per_lane*2,num_per_lane*3)]]=7
+
+#lane.fill(1)
+car1=np.vstack((car1,lane))
+direction=np.zeros(144)
+#direction.fill(0)
+
+direction[[range(num_per_lane)]]=2
+direction[[range(num_per_lane,num_per_lane*2)]]=0
+direction[[range(num_per_lane*2,num_per_lane*3)]]=1
+car1=np.vstack((car1,direction))
+distace_travelled=np.zeros(144)
+car1=np.vstack((car1,distace_travelled))
+print(car1)    
+time.sleep(3)
+data=np.transpose(car1)
+
+
+ARRAY=np.column_stack((grid0,grid1,grid2,grid3,grid4,grid5,grid6,grid7,grid8,grid9,grid10,grid11))
+
+with open(r"C:\Users\User\Desktop\Traffic Pictures\fulldataleft.txt", "w") as f:
+    np.savetxt(f, data)
+
+fig = plt.figure()
+ax1 = fig.add_subplot(1,1,1)
+
+def animate(h):
+
+
+    graph_data = open(r"C:\Users\User\Desktop\Traffic Pictures\fulldataleft.txt",'r').read()
+    lines = graph_data.split('\n')
+    xs = []
+    ys = []
+    vel=[]
+    for line in lines:
+        if len(line) > 1:
+            x, y ,x_vel,y_vel,direc,dis = line.split(' ')
+            xs.append(float(x))
+            ys.append(float(y))
+            vel.append(float(x_vel))
+    ax1.clear()
+    plt.ylim(0,length_of_road)
+    plt.xlim(-length_of_road,length_of_road)
+    plt.title("Time "+str(h) + " Number of cars " + str(number_of_cars)+ " Breakdown chance " +str(break_down_chance) + " Velocity " + str(Vmax))
+    #ax1.set_yticks(np.arange(0,length_of_road,1))
+    #ax1.set_xticks(np.arange(0,length_of_road,1))
+    ax1.scatter(xs, ys, s=10, c=vel, linestyle='-', linewidth=1 )
+    ax1.grid(b=True,axis='y',alpha=1)
+    
+    plt.pause(0.5)
+def drive_y(car,grid_lock,j,i,j1,loop, sign):
+    j=j*sign
+    j1=j1*sign
+    #print(j)
+    #print(j1)
+    if car[1,i]+j1<length_of_road+10:
+        
+        if grid_lock[int(car[1,i])+j,int(car[3,i])] ==1 :
+            #print("car in front ")
+            car[2,i]=0
+            loop=False
+            return car,grid_lock,loop
+        
+        
+        
+        elif fabs(j1)>car[2,i] :
+            #print("unobstructed drive")
+            grid_lock[int(car[1,i]),int(car[3,i])]=0
+            car[1,i]=car[1,i]+j    
+                
+            grid_lock[int(car[1,i]),int(car[3,i])]=1
+            loop= False
+            return car,grid_lock,loop
+                                        
+                                        
+        elif grid_lock[int(car[1,i])+j,int(car[3,i])] !=1 and grid_lock[int(car[1,i])+j1,int(car[3,i])] !=1  : 
+            #print(" we can keep driving")
+            loop=True
+            return car,grid_lock,loop
+                
+        elif grid_lock[int(car[1,i])+j,int(car[3,i])] !=1 and grid_lock[int(car[1,i])+j1,int(car[3,i])] ==1 :
+            #print("Space occupied in front ")
+            grid_lock[int(car[1,i]),int(car[3,i])]=0
+            grid_lock[int(car[1,i])+j,int(car[3,i])]=1 
+            car[2,i]=fabs(j)
+            car[1,i]=car[1,i]+j
+
+            return car,grid_lock,loop
+        
+def drive_x(car,grid_lock,j,i,j1,loop,sign):
+    j=j*sign
+    j1=j1*sign
+    #print(grid_lock)
+    #print(j)
+    #print(j1)
+    if car[0,i]+j1<length_of_road*2:
+        
+        if grid_lock[int(car[0,i])+n+j,int(car[3,i])] ==1:
+            #print("car in front right ")
+            car[2,i]=0
+            loop=False
+            return car,grid_lock,loop
+        
+        
+        
+        elif fabs(j1)>car[2,i] :
+            #print("unobstructed drive right")
+            grid_lock[int(car[0,i])+n,int(car[3,i])]=0
+            car[0,i]=car[0,i]+j   
+                
+            grid_lock[int(car[0,i])+n,int(car[3,i])]=1
+            loop=False
+            return car,grid_lock,loop
+                                        
+                                        
+        elif grid_lock[int(car[0,i])+j+n,int(car[3,i])] !=1 and grid_lock[int(car[0,i])+j1+n,int(car[3,i])] !=1 : 
+            #print(" we can keep driving right")
+            loop=True
+            return car,grid_lock,loop
+                
+        elif grid_lock[int(car[0,i])+j+n,int(car[3,i])] !=1 and grid_lock[int(car[0,i])+j1+n,int(car[3,i])] ==1 :
+            #print("Space occupied in front right ")
+            grid_lock[int(car[0,i])+n,int(car[3,i])]=0
+            grid_lock[int(car[0,i])+j+n,int(car[3,i])]=1 
+            car[2,i]=fabs(j)
+            car[0,i]=car[0,i]+j
+            loop=False
+            return car,grid_lock,loop
+        
+        
+
+def drive(car,grid_lock,j,i,j1,loop):
+        if car[4,i]==0:#forward
+            drive_y(car,grid_lock,j,i,j1,loop,1)
+        elif car[4,i]==1:#backward
+            drive_y(car,grid_lock,j,i,j1,loop,-1)
+        elif car[4,i]==2:#left
+            drive_x(car,grid_lock,j,i,j1,loop,-1)
+        elif car[4,i]==3:#right
+            drive_x(car,grid_lock,j,i,j1,loop,1)
+        return car,grid_lock,loop
+    
+def central_crossroad(car,grid,j,i,j1,stop_position_x,stop_position_y,block_road,side,count):
+    car[2,i]=0#car needs to stop at traffic light
+    print("WE ARE AT CENTRAL CROSS ROADS")
+    random1=list(range(0,4))
+    random1.remove(block_road)
+    which_way=random.choice(random1)
+    print(which_way)
+    count[0]=count[0]+1
+    if which_way==0 and grid[51,1]==1 : #driving forward
+
+        print("FORWARD POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10 or int(car[3,i])==4:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 :
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==0 and grid[51,1]!=1 :
+        print("POSITIVE Y")
+        car[3,i]=1
+        car[1,i]=51
+        car[0,i]=0
+        grid[51,1]=1
+        car[4,i]=0
+        ARRAY=grid
+
+    if which_way==2 and grid[-1+n,10]==1 and side==-1: #driving left
+        print("LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 or int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2  and grid[-1+n,10]!=1 and side==-1:
+        print("NEGATIVE X")
+        car[3,i]=10
+        car[1,i]=49
+        car[0,i]=-1
+        grid[-1+n,10]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==2 and grid[-1+n,4]==1 and side==1: #driving left
+        print("LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 or int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2  and grid[-1+n,4]!=1 and side==1:
+        print("NEGATIVE X")
+        car[3,i]=4
+        car[1,i]=50
+        car[0,i]=-1
+        grid[-1+n,4]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==2 and grid[-1+n,10]==1 and side==0: #driving left
+        print("LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 or int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2  and grid[-1+n,10]!=1 and side==0:
+        print("NEGATIVE X")
+        car[3,i]=10
+        car[1,i]=49
+        car[0,i]=-1
+        grid[-1+n,10]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==2 and grid[-1+n,4]==1 and side==0: #driving left
+        print("LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 or int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2  and grid[-1+n,4]!=1 and side==0:
+        print("NEGATIVE X")
+        car[3,i]=4
+        car[1,i]=50
+        car[0,i]=-1
+        grid[-1+n,4]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==3 and (grid[2+n,4]==1): #driving right
+        print("RIGHT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==4:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1 or int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==3  and grid[2+n,4]!=1:
+        print("POSITIVE X")
+        car[3,i]=4
+        car[1,i]=50
+        car[0,i]=2
+        grid[2+n,4]=1
+        car[4,i]=3
+        ARRAY=grid
+    if which_way==1 and (grid[48,7]==1): #driving down
+        print("DOWN POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==4 or int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==1  and grid[48,7]!=1:
+        print("NEGATIVE Y")
+        car[3,i]=7
+        car[1,i]=48
+        car[0,i]=1
+        grid[48,7]=1
+        car[4,i]=1
+        ARRAY=grid
+    return car,ARRAY,count
+        
+        
+def upper_crossroads(car,grid,j,i,j1,stop_position_x,stop_position_y,block_road,count):
+    count[1]=count[1]+1
+    car[2,i]=0#car needs to stop at traffic light
+    print("WE ARE AT UPPER CROSS ROADS")
+    print(block_road)
+    block_road = np.asarray(block_road)
+    random1=list(range(0,4))
+    random1 = np.asarray(random1)
+    random1=np.delete(random1,block_road)
+    print(random1)
+    which_way=random.choice(random1)
+    print(which_way)
+    if which_way==2 and (grid[-1+n,9]==1): #driving left
+        print("FRONT LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==9:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2 and grid[-1+n,9]!=1 :
+        print("NEGATIVE X")
+        car[3,i]=9
+        car[1,i]=98
+        car[0,i]=-1
+        grid[-1+n,9]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==3 and grid[2+n,3]==1: #driving right
+        print("FRONT RIGHT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==3:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==1:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==3 and grid[2+n,3]!=1 :
+        print("POSITIVE X")
+        car[3,i]=3
+        car[1,i]=99
+        car[0,i]=2
+        grid[2+n,3]=1
+        car[4,i]=3
+        ARRAY=grid
+
+
+    if which_way==1 and grid[97,7]==1:#driving down
+        print("Top Bottom POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==3 or int(car[3,i])==9 :
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==1 and grid[97,7]!=1 :
+        print("Negative Y")
+        car[3,i]=7
+        car[1,i]=97
+        car[0,i]=1
+        grid[97,7]=1
+        car[4,i]=1      
+        ARRAY=grid
+    return car,ARRAY,count
+def left_crossroads(car,grid,j,i,j1,stop_position_x,stop_position_y,block_road,count):
+    count[3]=count[3]+1
+    car[2,i]=0#car needs to stop at traffic light
+    print("WE ARE AT LEFT CROSS ROADS")
+    block_road = np.asarray(block_road)
+    random1=list(range(0,4))
+    random1 = np.asarray(random1)
+    random1=np.delete(random1,block_road)
+    which_way=random.choice(random1)
+    print(which_way)
+    if which_way==3 and (grid[-97+n,4]==1): #driving right
+        print("MIDDLE RIGHT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==0 or int(car[3,i])==6 :
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==3 and (grid[-97+n,4]!=1) :
+        print("POSITIVE X")
+        car[3,i]=4
+        car[1,i]=50
+        car[0,i]=-97
+        grid[-97+n,4]=1
+        car[4,i]=3
+        ARRAY=grid
+    if which_way==1 and grid[48,6]==1 :#driving down
+        print("MIDDLE BOTTOM POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==6:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+
+    elif which_way==1 and grid[48,6]!=1  :
+        print("Negative Y")
+        car[3,i]=6
+        car[1,i]=48
+        car[0,i]=-98
+        grid[48,6]=1
+        car[4,i]=1      
+        ARRAY=grid
+
+    if which_way==0 and grid[51,0]==1:#driving up
+        print("MIDDLE TOP POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==10:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==0:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+
+    elif which_way==0 and grid[51,0]!=1 :
+        print("POSITIVE Y")
+        car[3,i]=0
+        car[1,i]=51
+        car[0,i]=-99
+        grid[51,0]=1
+        car[4,i]=0
+        ARRAY=grid
+    return car,ARRAY,count
+        
+        
+def lower_crossroads(car,grid,j,i,j1,stop_position_x,stop_position_y,block_road,count):
+    count[2]=count[2]+1
+    car[2,i]=0#car needs to stop at traffic light
+    print("WE ARE AT LOWER CROSS ROADS")
+    random1=list(range(0,4))
+    random1.remove(block_road)
+    random1.remove(1)
+    which_way=random.choice(random1)
+    print(which_way)
+    if which_way==2 and (grid[-1+n,11]==1): #driving left
+        print("BOTTOM LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==11:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+
+    elif which_way==2 and (grid[-1+n,11]!=1) :
+        print("NEGATIVE X")
+        car[3,i]=11
+        car[1,i]=0
+        car[0,i]=-1
+        grid[-1+n,11]=1
+        car[4,i]=2
+        ARRAY=grid
+    if which_way==3 and grid[2+n,5]==1: #driving right
+        print("BOTTOM RIGHT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==5:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==7:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==3 and grid[2+n,5]!=1:
+        print("POSITIVE X")
+        car[3,i]=5
+        car[1,i]=1
+        car[0,i]=2
+        grid[2+n,5]=1
+        car[4,i]=3
+        ARRAY=grid
+    if which_way==0 and grid[2,1]==1: #driving up
+        print("BOTTOM TOP POSITION OCCUPIED")
+
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==5 or int(car[3,i])==11 :
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==0 and grid[2,1]!=1 :
+        print("POSITVE Y")
+        car[3,i]=1
+        car[1,i]=2
+        car[0,i]=0
+        grid[2,1]=1
+        car[4,i]=0
+        ARRAY=grid
+    return car,ARRAY,count
+
+def right_crossroads(car,grid,j,i,j1,stop_position_x,stop_position_y,block_road,count):
+    count[4]=count[4]+1
+    car[2,i]=0#car needs to stop at traffic light
+    print("WE ARE AT RIGHT CROSS ROADS")
+    random1=list(range(0,4))
+    random1.remove(block_road)
+    random1.remove(3)
+    which_way=random.choice(random1)
+    print(which_way)
+    if which_way==0 and grid[51,2]==1: #driving up
+        print("MIDDLE TOP POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==4:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==2:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+        
+    elif which_way==0 and grid[51,2]!=1 :
+        print("POSITIVE Y")
+        car[3,i]=2
+        car[1,i]=51
+        car[0,i]=99
+        grid[51,2]=1
+        car[4,i]=0
+        ARRAY=grid
+    if which_way==1 and grid[48,8]==1: #driving down
+        print("MIDDLE BOTTOM POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==4:
+            grid[int(car[0,i])+n,int(car[3,i])]=1
+        elif int(car[3,i])==8:
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==1 and grid[48,8]!=1 :
+        print("NEGATIVE Y")
+        car[3,i]=8
+        car[1,i]=48
+        car[0,i]=100
+        grid[48,8]=1
+        car[4,i]=1
+        ARRAY=grid
+    if which_way==2 and grid[98+n,10]==1: #driving left
+        print("MIDDLE LEFT POSITION OCCUPIED")
+        car[0,i]=stop_position_x
+        car[1,i]=stop_position_y
+        car[2,i]=0
+        if int(car[3,i])==2 or int(car[3,i])==8 :
+            grid[int(car[1,i]),int(car[3,i])]=1
+        ARRAY=grid
+    elif which_way==2 and grid[98+n,10]!=1:
+        print("NEGATIVE X")
+        car[3,i]=10
+        car[1,i]=49
+        car[0,i]=98
+        grid[98+n,10]=1
+        car[4,i]=2
+        ARRAY=grid
+    return car,ARRAY,count
+
+
+
+def catch_if_statments(car,ARRAY,j,i,j1,loop,count):
+    if (j+car[1,i]>=48 and car[4,i]==0 and car[1,i]<=48 and car[3,i]==1): #we are at the central cross road coming from downside
+        ARRAY[int(car[1,i]),1]=0
+        print(car)
+        car,ARRAY,count=central_crossroad(car,ARRAY,j,i,j1,0,47,1,-1,count)
+    elif (-j+car[1,i]<=51 and car[4,i]==1 and car[1,i]>=51 and car[3,i]==7): #we are at the central cross road coming from upside
+        ARRAY[int(car[1,i]),7]=0
+        print(car)
+        car,ARRAY,count=central_crossroad(car,ARRAY,j,i,j1,1,52,0,1,count)
+    elif (j+car[0,i]>=-1 and car[4,i]==3 and car[0,i]<=-1 and car[3,i]==4): #we are at the central cross road coming from left side
+        ARRAY[int(car[0,i])+n,4]=0
+        print(car)
+        car,ARRAY,count=central_crossroad(car,ARRAY,j,i,j1,-2,50,2,-1,count)
+    elif (-j+car[0,i]<=2 and car[4,i]==2 and car[0,i]>=2 and car[3,i]==10): #we are at the central cross road coming from right side
+        ARRAY[int(car[0,i])+n,10]=0
+        print(car)
+        time.sleep(5)
+        print("IF STATEMENT WORKS")
+        car,ARRAY,count=central_crossroad(car,ARRAY,j,i,j1,3,49,3,0,count)
+    elif (j+car[1,i]>=97 and car[4,i]==0 and car[1,i]<=97 and car[3,i]==1):#we are at the upper crossroads coming from downside
+        ARRAY[int(car[1,i]),1]=0
+        print(car)
+        car,ARRAY,count=upper_crossroads(car,ARRAY,j,i,j1,0,97,[1,0],count)
+    elif (j+car[1,i]>=97 and car[4,i]==0 and car[1,i]<=97 and car[3,i]==7):#we are at the upper crossroads coming from downside
+        ARRAY[int(car[1,i]),7]=0
+        print(car)
+        car,ARRAY,count=upper_crossroads(car,ARRAY,j,i,j1,1,97,[1,0],count)
+    elif (-j+car[0,i]<=2 and car[4,i]==2 and car[0,i]>=2 and car[3,i]==9):#we are at the upper crossroads coming from right side
+        ARRAY[int(car[0,i])+n,9]=0
+        print(car)
+        car,ARRAY,count=upper_crossroads(car,ARRAY,j,i,j1,3,98,[3,0],count)
+    elif (j+car[0,i]>=-1 and car[4,i]==3 and car[0,i]<=-1 and car[3,i]==3):#we are at the upper crossroads coming from left side
+        ARRAY[int(car[0,i])+n,3]=0
+        print(car)
+        car,ARRAY,count=upper_crossroads(car,ARRAY,j,i,j1,-2,99,[2,0],count)
+    ####################################
+    elif (j+car[1,i]>=48 and car[4,i]==0 and car[1,i]<=48 and car[3,i]==0):#we are at the left crossroads coming from downside
+        ARRAY[int(car[1,i]),0]=0
+        print(car)
+        car,ARRAY,count=left_crossroads(car,ARRAY,j,i,j1,-99,47,[1,3,2],count)
+    elif (-j+car[0,i]<=-97 and car[4,i]==2 and car[0,i]>=-97 and car[3,i]==10):#we are at the left crossroads coming from right side
+        ARRAY[int(car[0,i])+n,10]=0
+        print(car)
+        car,ARRAY,count=left_crossroads(car,ARRAY,j,i,j1,-96,49,[3,2],count)
+    elif (-j+car[0,i]<=-97 and car[4,i]==2 and car[0,i]>=-97 and car[3,i]==4):#we are at the left crossroads coming from right side
+        ARRAY[int(car[0,i])+n,4]=0
+        print(car)
+        car,ARRAY,count=left_crossroads(car,ARRAY,j,i,j1,-96,50,[3,2],count)
+    elif (-j+car[1,i]<=51 and car[4,i]==1 and car[1,i]>=51 and car[3,i]==6):#we are at the left crossroads coming from upperside
+        ARRAY[int(car[1,i]),6]=0
+        print(car)
+        car,ARRAY,count=left_crossroads(car,ARRAY,j,i,j1,-98,52,[0,3,2],count)    
+   ###############################    
+                
+    elif (-j+car[1,i]<=2 and car[4,i]==1 and car[1,i]>=2 and car[3,i]==7):#we are at the bottom crossroads coming from upper
+        ARRAY[int(car[1,i]),7]=0
+        print(car)
+        car,ARRAY,count=lower_crossroads(car,ARRAY,j,i,j1,1,3,0,count)
+    elif (-j+car[0,i]<=2 and car[4,i]==2 and car[0,i]>=2 and car[3,i]==11):#we are at the bottom crossroads coming from right side
+        ARRAY[int(car[0,i])+n,11]=0
+        print(car)
+        car,ARRAY,count=lower_crossroads(car,ARRAY,j,i,j1,3,0,3,count)
+    elif (j+car[0,i]>=-1 and car[4,i]==3 and car[0,i]<=-1 and car[3,i]==5):#we are at the bottom crossroads coming from left side
+        ARRAY[int(car[0,i])+n,5]=0
+        print(car)
+        car,ARRAY,count=lower_crossroads(car,ARRAY,j,i,j1,-2,1,2,count)
+    ##########################################
+    elif (-j+car[1,i]<=51 and car[4,i]==1 and car[1,i]>=51 and car[3,i]==8):#we are at the right crossroads coming from upper side
+        ARRAY[int(car[1,i]),8]=0
+        print(car)
+        car,ARRAY,count=right_crossroads(car,ARRAY,j,i,j1,100,52,0,count)
+    elif (j+car[0,i]>=98 and car[4,i]==3 and car[0,i]<=98 and car[3,i]==4):#we are at the right crossroads coming from left side
+        ARRAY[int(car[0,i])+n,4]=0
+        print(car)
+        car,ARRAY,count=right_crossroads(car,ARRAY,j,i,j1,97,50,2,count)
+    elif (j+car[1,i]>=48 and car[4,i]==0 and car[1,i]<=48 and car[3,i]==2):#we are at the right crossroads coming from lower side
+        ARRAY[int(car[1,i]),2]=0
+        print(car)
+        car,ARRAY,count=right_crossroads(car,ARRAY,j,i,j1,99,47,1,count)    
+    elif (j1+car[1,i]>=98 and car[3,i]==2 and car[4,i]==0): #top right corner going up
+        ARRAY[int(car[1,i]),2]=0
+        car[1,i]=98
+        car[0,i]=98
+        car[4,i]=2
+        car[3,i]=9
+        #ARRAY[int(car[0,i]),3]=1
+    elif (j1+car[0,i]>=99 and car[3,i]==3 and car[4,i]==3): #top right corner going right
+        ARRAY[int(car[0,i])+n,3]=0
+        car[1,i]=99
+        car[0,i]=99
+        car[4,i]=1
+        car[3,i]=8
+        #ARRAY[int(car[1,i]),2]=1
+    elif (-j1+car[1,i]<=0 and car[3,i]==8) and car[4,i]==1: #bottom right corner going down
+        ARRAY[int(car[1,i]),8]=0
+        car[1,i]=0
+        car[0,i]=99
+        car[4,i]=2
+        car[3,i]=11
+        #ARRAY[int(car[0,i]),5]=1
+    elif (j1+car[0,i]>=98 and car[3,i]==5 and car[4,i]==3): #bottom right corner going right
+        ARRAY[int(car[0,i])+n,5]=0
+        car[1,i]=1
+        car[0,i]=98
+        car[4,i]=0
+        car[3,i]=2
+        #ARRAY[int(car[1,i]),2]=1
+    elif (-j1+car[0,i]<=-99 and car[3,i]==11 and car[4,i]==2): #bottom left corner going left
+        ARRAY[int(car[0,i])+n,11]=0
+        car[1,i]=0
+        car[0,i]=-99
+        car[4,i]=0
+        car[3,i]=0
+        #ARRAY[int(car[1,i]),0]=1
+    elif (-j1+car[1,i]<=1 and car[3,i]==6 and car[4,i]==1): #bottom left corner going down
+        ARRAY[int(car[1,i]),6]=0
+        car[1,i]=1
+        car[0,i]=-98
+        car[4,i]=3
+        car[3,i]=5
+        #ARRAY[int(car[1,i]),5]=1
+    elif (j1+car[1,i]>=99 and car[3,i]==0 and car[4,i]==0): #top left corner going up
+        ARRAY[int(car[1,i]),0]=0
+        car[1,i]=99
+        car[0,i]=-99
+        car[4,i]=3
+        car[3,i]=3
+        #ARRAY[int(car[1,i]),3]=1
+    elif (-j1+car[0,i]<=-99 and car[3,i]==9 and car[4,i]==2): #top left corner going left
+        ARRAY[int(car[0,i])+n,9]=0
+        car[1,i]=98
+        car[0,i]=-98
+        car[4,i]=1
+        car[3,i]=6
+        #ARRAY[int(car[1,i]),0]=1
+    else:
+        car,ARRAY,loop=drive(car,ARRAY,j,i,j1,loop) 
+        
+    return car,ARRAY,loop,count
+
+def breakdown(car,i,break_down_chance1):
+    p=np.random.rand(1)
+    if p<break_down_chance1:
+        print("CAR SLOWS DOWN")
+        car[2,i]=car[2,i]-1
+    elif p<0.01:
+        print("BREAKDOWN")
+        car[2,i]=0
+    return car
+def new_velocity(car,ARRAY,lenth_of_road,break_down_chance,count):
+    for i in range(144):
+        
+        if car[2,i]<Vmax:
+            
+
+            loop=True
+            car[2,i]=car[2,i]+1
+            j=1
+            while loop==True and (j<int(car[2,i]+1) ) :
+                j1=j+1
+                car,ARRAY,loop,count=catch_if_statments(car,ARRAY,j,i,j1,loop,count)           
+                j=j+1
+            if car[2,i]>=1:
+                car=breakdown(car,i,break_down_chance)  
+            car[5,i]=car[5,i]+car[2,i]
+        elif car[2,i]==Vmax:   
+            loop=True
+            j=1
+            while loop==True and (j<int(car[2,i]+1)):
+                j1=j+1
+                car,ARRAY,loop,count=catch_if_statments(car,ARRAY,j,i,j1,loop,count)
+                j=j+1
+            if car[2,i]>=1:
+                car=breakdown(car,i,break_down_chance)
+            car[5,i]=car[5,i]+car[2,i]
+    return car,count
+ 
+
+for h in range(100):
+
+    print(break_down_chance)
+    z,z1=new_velocity(car1,ARRAY,length_of_road, break_down_chance,count)      
+    print(z)
+    new_data=np.transpose(z)
+    with open(r"C:\Users\User\Desktop\Traffic Pictures\fulldataleft.txt", "w") as f:
+        np.savetxt(f, data)
+    animate(h)
+plt.close()
+average_distance=sum(z[5,:])/144
+print(average_distance)
+with open(r"C:\Users\User\Desktop\Traffic Simulation Varied Velocity\Only Left\only_left.txt","a") as j:
+    j.write(str(average_distance) +"\n")
+with open(r"C:\Users\User\Desktop\Traffic Simulation Varied Velocity\Only Left\only_left_all.txt","a") as j:
+    j.write(str(z[5,:]) +"\n")
+with open(r"C:\Users\User\Desktop\Traffic Simulation Varied Velocity\Only Left\count.txt","a") as j:
+    j.write(str(z1) +"\n")
+print ("My program took", time.time() - start_time, "to run")
